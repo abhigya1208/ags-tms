@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
 
 const authRoutes = require('./routes/auth');
 const studentRoutes = require('./routes/students');
@@ -13,15 +14,21 @@ const logRoutes = require('./routes/logs');
 
 const app = express();
 
-// Rate limiting
+// Rate limiting - increased limit
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 5000,  // Increased from 500 to 5000
   message: { error: 'Too many requests, please try again later.' }
 });
 
 app.use(limiter);
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000', credentials: true }));
+
+// CORS - allow both local and production frontend
+app.use(cors({ 
+  origin: ['http://localhost:3000', 'https://ags-tms-frontend.onrender.com'], 
+  credentials: true 
+}));
+
 app.use(express.json({ limit: '10mb' }));
 
 // Routes
@@ -34,6 +41,31 @@ app.use('/api/logs', logRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+
+// Seed endpoint - creates admin user
+app.get('/api/seed', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    
+    // Check if admin exists
+    const adminExists = await User.findOne({ email: 'admin@ags.com' });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      await User.create({
+        name: 'Admin User',
+        email: 'admin@ags.com',
+        password: hashedPassword,
+        role: 'admin',
+        isActive: true
+      });
+      res.json({ message: '✅ Admin created: admin@ags.com / admin123' });
+    } else {
+      res.json({ message: 'Admin already exists. Login with admin@ags.com / admin123' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Global error handler
 app.use((err, req, res, next) => {
