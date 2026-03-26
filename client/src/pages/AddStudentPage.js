@@ -17,14 +17,22 @@ const AddStudentPage = () => {
   const [selectedSiblings, setSelectedSiblings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchingClass, setSearchingClass] = useState(false);
+    useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await api.get('/teachers');
 
-  useEffect(() => {
-    if (isAdmin) {
-      api.get('/admin/classes').then(res => setClasses(res.data.classes)).catch(() => {});
-    } else {
-      setClasses(user.assignedClasses || []);
-    }
-  }, [isAdmin, user]);
+        // Extract unique classes
+        const uniqueClasses = [...new Set(res.data.map(t => t.class))];
+
+        setClasses(uniqueClasses);
+      } catch (err) {
+        console.error("Failed to fetch classes", err);
+      }
+    };
+
+    fetchClasses();
+  }, []);
 
   const searchSiblings = async (q) => {
     if (q.length < 2) { setSiblingResults([]); return; }
