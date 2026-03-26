@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './services/AuthContext';
+import { ThemeProvider } from './services/ThemeContext';
 
 import LoginPage from './pages/LoginPage';
 import Layout from './components/layout/Layout';
@@ -31,8 +32,9 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
 };
 
 const App = () => (
-  <BrowserRouter>
-    <AuthProvider>
+  <ThemeProvider>
+    <BrowserRouter>
+      <AuthProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -60,7 +62,8 @@ const App = () => (
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
-  </BrowserRouter>
+    </BrowserRouter>
+  </ThemeProvider>
 );
 
 export default App;

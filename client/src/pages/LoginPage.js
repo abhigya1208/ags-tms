@@ -29,27 +29,27 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sage-50 via-cream-100 to-peach-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-sage-50 via-cream-100 to-peach-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-sage-200/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-peach-200/30 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-sage-200/30 dark:bg-sage-900/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-peach-200/30 dark:bg-peach-900/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-sage-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sage-200">
+          <div className="w-16 h-16 bg-sage-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sage-200 dark:shadow-sage-900/40">
             <AcademicCapIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-sage-900">AGS</h1>
-          <p className="text-sage-600 text-sm mt-1">Tutorial Management System</p>
+          <h1 className="font-display text-3xl font-bold text-sage-900 dark:text-sage-100">AGS</h1>
+          <p className="text-sage-600 dark:text-sage-400 text-sm mt-1">Tutorial Management System</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-sage-100 p-8">
-          <h2 className="font-display text-xl font-semibold text-gray-800 mb-1">Welcome back</h2>
-          <p className="text-sm text-gray-400 mb-6">Sign in to your account</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-sage-100 dark:border-gray-700/60 p-8">
+          <h2 className="font-display text-xl font-semibold text-gray-800 dark:text-gray-100 mb-1">Welcome back</h2>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Sign in to your account</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -90,7 +90,7 @@ const LoginPage = () => {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
           AGS Tutorial Management System &copy; {new Date().getFullYear()}
         </p>
       </div>
