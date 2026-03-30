@@ -15,6 +15,7 @@ import DefaultersPage from './pages/DefaultersPage';
 import LogsPage from './pages/LogsPage';
 import SessionsPage from './pages/SessionsPage';
 import ProfilePage from './pages/ProfilePage';
+import ChatPage from './pages/ChatPage';  // ✅ YEH ADD KIYA
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useAuth();
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="logs" element={<PrivateRoute adminOnly><LogsPage /></PrivateRoute>} />
           <Route path="sessions" element={<PrivateRoute adminOnly><SessionsPage /></PrivateRoute>} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="chat" element={<PrivateRoute><ChatPage /></PrivateRoute>} />  {/* ✅ YEH ADD KIYA */}
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

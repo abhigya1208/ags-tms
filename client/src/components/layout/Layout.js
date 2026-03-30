@@ -7,6 +7,7 @@ import {
   HomeIcon, UsersIcon, AcademicCapIcon, ClipboardDocumentListIcon,
   ComputerDesktopIcon, Bars3Icon, ArrowRightOnRectangleIcon,
   UserCircleIcon, ExclamationTriangleIcon, SunIcon, MoonIcon,
+  ChatBubbleLeftRightIcon,  // ✅ CHAT ICON ADD KIYA
 } from '@heroicons/react/24/outline';
 
 const navItems = [
@@ -16,6 +17,7 @@ const navItems = [
   { to: '/defaulters', icon: ExclamationTriangleIcon, label: 'Defaulters', adminOnly: true },
   { to: '/logs', icon: ClipboardDocumentListIcon, label: 'Audit Logs', adminOnly: true },
   { to: '/sessions', icon: ComputerDesktopIcon, label: 'Sessions', adminOnly: true },
+  { to: '/chat', icon: ChatBubbleLeftRightIcon, label: 'Chat' },  // ✅ CHAT NAVIGATION ADD KIYA
 ];
 
 // Reusable toggle — full-row for sidebar, icon-only for mobile header
