@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/auth");
+const protect = require("../middleware/auth");  // ✅ CHANGE YAHAN
 const {
   getMyChats,
   getAllUsers,
@@ -9,7 +9,8 @@ const {
   addMember,
   removeMember,
   deleteGroup,
-  getMessages
+  getMessages,
+  sendMessage
 } = require("../controllers/chatcontroller");
 
 // All routes are protected
