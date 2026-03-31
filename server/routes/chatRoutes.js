@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const { authenticate } = require("../middleware/auth");
 
-// Render/Linux fix: Check if your file is 'chatController' or 'chatcontroller'
+// Casing fix for Linux/Render
 let chatController;
 try {
   chatController = require("../controllers/chatcontroller");
 } catch (err) {
-  chatController = require("../controllers/chatcontroller");
+  chatController = require("../controllers/chatController");
 }
 
 const {
@@ -22,12 +22,7 @@ const {
   sendMessage
 } = chatController;
 
-// Debug log to confirm everything is loaded in Render logs
-console.log("✅ Chat functions check:", {
-  getMyChats: typeof getMyChats,
-  sendMessage: typeof sendMessage
-});
-
+// Auth middleware applied to all chat routes
 router.use(authenticate);
 
 router.get("/", getMyChats);
@@ -37,7 +32,9 @@ router.post("/group", createGroupChat);
 router.put("/group/:chatId/add", addMember);
 router.delete("/group/:chatId/remove/:userId", removeMember);
 router.delete("/group/:chatId", deleteGroup);
+
+// Message routes
 router.get("/:chatId/messages", getMessages);
-router.post("/message", sendMessage);
+router.post("/message", sendMessage); // Targeted by ChatWindow
 
 module.exports = router;

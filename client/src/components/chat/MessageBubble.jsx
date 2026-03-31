@@ -1,21 +1,26 @@
 import React from "react";
 
 const MessageBubble = ({ message, isOwn, showSender, chatMembers }) => {
+  // Sender Name logic with fallback
   const senderName =
     typeof message.senderId === "object"
       ? message.senderId?.name
       : chatMembers?.find((m) => m._id === message.senderId)?.name || "Unknown";
 
-  const time = new Date(message.createdAt).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // Time formatting
+  const time = message.createdAt 
+    ? new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  // Seen status: message is "seen" if at least one OTHER person has seen it
-  const seenByOthers = (message.seenBy || []).filter(
-    (id) => id !== message.senderId?._id && id !== message.senderId
-  );
+  // Seen status logic
+  const senderIdStr = typeof message.senderId === "object" ? message.senderId?._id : message.senderId;
+  const seenByOthers = (message.seenBy || []).filter((id) => id !== senderIdStr);
   const isSeen = seenByOthers.length > 0;
+
+  // FIX: Support both 'text' and 'content' fields
+  const messageText = message.content || message.text || "";
+
+  if (!messageText && !message.image) return null; // Don't render empty bubbles
 
   return (
     <div className={`bubble-wrapper ${isOwn ? "own" : "other"}`}>
@@ -31,7 +36,7 @@ const MessageBubble = ({ message, isOwn, showSender, chatMembers }) => {
         )}
 
         <div className={`bubble ${isOwn ? "bubble-own" : "bubble-other"}`}>
-          <p className="bubble-text">{message.text}</p>
+          <p className="bubble-text">{messageText}</p>
         </div>
 
         <div className="bubble-meta">
