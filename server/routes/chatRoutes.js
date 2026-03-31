@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { authenticate } = require("../middleware/auth");
+const chatController = require("../controllers/chatcontroller");
+
+// Destructure with safety check
 const {
   getMyChats,
   getAllUsers,
@@ -11,12 +14,13 @@ const {
   deleteGroup,
   getMessages,
   sendMessage
-} = require("../controllers/chatcontroller");
+} = chatController;
 
-// Sabhi routes ko protect karne ke liye
+// Debug log
+console.log("✅ Chat routes loaded, sendMessage exists:", typeof sendMessage === "function");
+
 router.use(authenticate);
 
-// Chat Routes
 router.get("/", getMyChats);
 router.get("/users", getAllUsers);
 router.post("/", createOrGetChat);
