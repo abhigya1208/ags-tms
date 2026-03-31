@@ -19,17 +19,14 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'User not found or inactive' });
     }
 
-    // Check session activity
     const session = await Session.findOne({ sessionId: decoded.sessionId, isActive: true });
     if (!session) {
       return res.status(401).json({ error: 'Session expired. Please login again.' });
     }
 
-    // Check inactivity timeout
     const now = Date.now();
     const lastActivity = new Date(session.lastActivity).getTime();
     if (now - lastActivity > INACTIVITY_TIMEOUT) {
-      // Auto logout
       session.isActive = false;
       session.logoutAt = new Date();
       session.autoLoggedOut = true;
@@ -39,7 +36,6 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'Session expired due to inactivity. Please login again.' });
     }
 
-    // Update last activity
     session.lastActivity = new Date();
     await session.save();
     await User.findByIdAndUpdate(user._id, { lastActivity: new Date() });
@@ -73,10 +69,10 @@ const requireTeacherOrAdmin = (req, res, next) => {
   next();
 };
 
-// Check if teacher can access a given class
 const canAccessClass = (user, studentClass) => {
   if (user.role === 'admin') return true;
   return user.assignedClasses.includes(studentClass);
 };
 
+// Exporting all functions
 module.exports = { authenticate, requireAdmin, requireTeacherOrAdmin, canAccessClass };
