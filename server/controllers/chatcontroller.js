@@ -1,5 +1,5 @@
 const Chat = require("../models/Chat");
-const Message = require("../models/Message");
+const Message = require("../models/message");
 const mongoose = require("mongoose");
 
 // ─── Get all chats for logged-in user ───────────────────────────────────────

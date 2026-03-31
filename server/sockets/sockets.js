@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const Message = require("../models/Message");
+const Message = require("../models/message");
 const Chat = require("../models/Chat");
 
 // Maps userId -> socketId for online tracking
