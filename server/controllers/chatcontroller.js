@@ -1,4 +1,4 @@
-const Chat = require("../models/Chat");
+const Chat = require("../models/chat");
 const Message = require("../models/message");
 const mongoose = require("mongoose");
 
