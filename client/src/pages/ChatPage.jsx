@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import ChatList from "../components/chat/ChatList";
 import ChatWindow from "../components/chat/ChatWindow";
 import api from "../services/api";
@@ -15,59 +15,66 @@ const ChatPage = () => {
   const currentUser = JSON.parse(localStorage.getItem("ags_user") || "{}");
   const token = localStorage.getItem("ags_token");
 
-  const authHeaders = {
+  // useMemo use kar rahe hain taaki dependency stable rahe
+  const authHeaders = useMemo(() => ({
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
-  };
+  }), [token]);
 
   // ─── Fetch all chats ───────────────────────────────────────────────────────
   const fetchChats = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await api.get('/chat');
-      setChats(res.data);
+      // FIX: Headers pass kiye hain aur path ko clean rakha hai
+      const res = await api.get('/chat', { headers: authHeaders });
+      setChats(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("fetchChats error:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authHeaders, token]);
 
   // ─── Socket setup ──────────────────────────────────────────────────────────
   useEffect(() => {
     fetchChats();
     const socket = getSocket();
 
-    socket.on("online_users", (users) => setOnlineUsers(users));
+    if (socket) {
+      socket.on("online_users", (users) => setOnlineUsers(users));
 
-    socket.on("receive_message", (message) => {
-      setChats((prev) =>
-        prev.map((c) =>
-          c._id === message.chatId
-            ? { ...c, lastMessage: message, updatedAt: new Date().toISOString() }
-            : c
-        )
-      );
-    });
-
-    socket.on("new_notification", (notif) => {
-      setSelectedChat((sel) => {
-        if (!sel || sel._id !== notif.chatId) {
-          setNotifications((prev) => [
-            { ...notif, id: Date.now() },
-            ...prev.slice(0, 4),
-          ]);
-          setTimeout(() => {
-            setNotifications((prev) => prev.filter((n) => n.chatId !== notif.chatId));
-          }, 4000);
-        }
-        return sel;
+      socket.on("receive_message", (message) => {
+        setChats((prev) =>
+          prev.map((c) =>
+            c._id === message.chatId
+              ? { ...c, lastMessage: message, updatedAt: new Date().toISOString() }
+              : c
+          )
+        );
       });
-    });
+
+      socket.on("new_notification", (notif) => {
+        setSelectedChat((sel) => {
+          if (!sel || sel._id !== notif.chatId) {
+            setNotifications((prev) => [
+              { ...notif, id: Date.now() },
+              ...prev.slice(0, 4),
+            ]);
+            setTimeout(() => {
+              setNotifications((prev) => prev.filter((n) => n.chatId !== notif.chatId));
+            }, 4000);
+          }
+          return sel;
+        });
+      });
+    }
 
     return () => {
-      socket.off("online_users");
-      socket.off("receive_message");
-      socket.off("new_notification");
+      if (socket) {
+        socket.off("online_users");
+        socket.off("receive_message");
+        socket.off("new_notification");
+      }
     };
   }, [fetchChats]);
 
@@ -114,6 +121,7 @@ const ChatPage = () => {
       </div>
 
       <div className="chat-layout">
+        {/* ChatList component ko yahan props pass ho rahe hain */}
         <ChatList
           chats={chats}
           selectedChat={selectedChat}

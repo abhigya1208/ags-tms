@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import GroupModal from "./GroupModal";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// Render par process.env ka path check karne ke liye ye safe check:
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// Agar API URL ke end mein '/api' hai toh use clean kar dete hain double path se bachne ke liye
+const API = API_BASE.endsWith('/api') ? API_BASE.replace('/api', '') : API_BASE;
 
 const ChatList = ({
   chats,
@@ -25,9 +28,11 @@ const ChatList = ({
 
   const fetchUsers = async () => {
     try {
+      // FIX: Yahan standard path use kar rahe hain
       const res = await fetch(`${API}/api/chat/users`, { headers: authHeaders });
+      if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("fetchUsers error:", err);
     }
@@ -37,9 +42,13 @@ const ChatList = ({
     try {
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
-        headers: authHeaders,
+        headers: {
+          ...authHeaders,
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ targetUserId }),
       });
+      if (!res.ok) throw new Error("Failed to start chat");
       const chat = await res.json();
       onNewChat(chat);
       setShowUserList(false);
@@ -49,21 +58,23 @@ const ChatList = ({
   };
 
   const getChatName = (chat) => {
+    if (!chat) return "Unknown";
     if (chat.isGroup) return chat.groupName;
     const other = chat.members?.find((m) => m._id !== currentUser._id);
-    return other?.name || "Unknown";
+    return other?.name || "Unknown User";
   };
 
   const getInitials = (name = "") =>
     name
       .split(" ")
+      .filter(w => w)
       .map((w) => w[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2);
+      .slice(0, 2) || "?";
 
   const isOnline = (chat) => {
-    if (chat.isGroup) return false;
+    if (!chat || chat.isGroup) return false;
     const other = chat.members?.find((m) => m._id !== currentUser._id);
     return other && onlineUsers.includes(other._id);
   };
@@ -72,8 +83,8 @@ const ChatList = ({
     const lm = chat.lastMessage;
     if (!lm) return "No messages yet";
     const senderName =
-      lm.senderId?._id === currentUser._id ? "You" : lm.senderId?.name;
-    return `${senderName}: ${lm.text}`;
+      lm.senderId?._id === currentUser._id ? "You" : (lm.senderId?.name || "User");
+    return `${senderName}: ${lm.content || lm.text || "Message"}`;
   };
 
   const filteredChats = chats.filter((c) =>
@@ -117,14 +128,15 @@ const ChatList = ({
       {showUserList && (
         <div className="user-picker">
           <p className="user-picker-label">Start a conversation</p>
-          {users.map((u) => (
+          {users.length === 0 ? <p className="chat-list-empty">No users found</p> : 
+           users.map((u) => (
             <div
               key={u._id}
               className="user-picker-item"
               onClick={() => startDirectChat(u._id)}
             >
               <div className="avatar sm">{getInitials(u.name)}</div>
-              <div>
+              <div className="user-info">
                 <p className="user-name">{u.name}</p>
                 <p className="user-role">{u.role}</p>
               </div>
