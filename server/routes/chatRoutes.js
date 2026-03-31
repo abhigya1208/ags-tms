@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const protect = require("../middleware/auth");  // ✅ CHANGE YAHAN
+const protect = require("../middleware/auth");
 const {
   getMyChats,
   getAllUsers,
@@ -13,18 +13,38 @@ const {
   sendMessage
 } = require("../controllers/chatcontroller");
 
+// Check if functions exist (for debugging)
+console.log("Chat controller functions loaded:", {
+  getMyChats: typeof getMyChats,
+  getAllUsers: typeof getAllUsers,
+  createOrGetChat: typeof createOrGetChat,
+  createGroupChat: typeof createGroupChat,
+  addMember: typeof addMember,
+  removeMember: typeof removeMember,
+  deleteGroup: typeof deleteGroup,
+  getMessages: typeof getMessages,
+  sendMessage: typeof sendMessage
+});
+
+// Check if protect middleware exists
+console.log("Protect middleware type:", typeof protect);
+
 // All routes are protected
-router.use(protect);
+if (typeof protect === 'function') {
+  router.use(protect);
+} else {
+  console.error("Protect middleware is not a function!");
+}
 
 // Chat routes
-router.get("/", getMyChats);
-router.get("/users", getAllUsers);
-router.post("/", createOrGetChat);
-router.post("/group", createGroupChat);
-router.put("/group/:chatId/add", addMember);
-router.delete("/group/:chatId/remove/:userId", removeMember);
-router.delete("/group/:chatId", deleteGroup);
-router.get("/:chatId/messages", getMessages);
-router.post("/message", sendMessage);
+if (typeof getMyChats === 'function') router.get("/", getMyChats);
+if (typeof getAllUsers === 'function') router.get("/users", getAllUsers);
+if (typeof createOrGetChat === 'function') router.post("/", createOrGetChat);
+if (typeof createGroupChat === 'function') router.post("/group", createGroupChat);
+if (typeof addMember === 'function') router.put("/group/:chatId/add", addMember);
+if (typeof removeMember === 'function') router.delete("/group/:chatId/remove/:userId", removeMember);
+if (typeof deleteGroup === 'function') router.delete("/group/:chatId", deleteGroup);
+if (typeof getMessages === 'function') router.get("/:chatId/messages", getMessages);
+if (typeof sendMessage === 'function') router.post("/message", sendMessage);
 
 module.exports = router;
