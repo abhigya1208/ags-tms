@@ -1,10 +1,13 @@
 import axios from 'axios';
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Change the axios base URL to use API_URL
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://ags-tms-backend.onrender.com/api'
+  : 'http://localhost:5000/api';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true
 });
 
 // Attach token to every request

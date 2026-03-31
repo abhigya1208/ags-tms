@@ -13,43 +13,44 @@ const teacherRoutes = require('./routes/teachers');
 const adminRoutes = require('./routes/admin');
 const exportRoutes = require('./routes/export');
 const logRoutes = require('./routes/logs');
+const chatRoutes = require("./routes/chatRoutes"); // Corrected path
 
 const app = express();
 
-// Rate limiting - increased limit
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5000,  // Increased from 500 to 5000
+  max: 5000,
   message: { error: 'Too many requests, please try again later.' }
 });
-
 app.use(limiter);
 
-// CORS - allow both local and production frontend
+// CORS FIX: Allow methods and headers for Render
 app.use(cors({ 
   origin: ['http://localhost:3000', 'https://ags-tms-frontend.onrender.com'], 
-  credentials: true 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
 
-// Routes
+// ROUTES REGISTRATION
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/logs', logRoutes);
+app.use('/api/chat', chatRoutes); // Standard path: access via /api/chat
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// Seed endpoint - creates admin user
+// Seed endpoint
 app.get('/api/seed', async (req, res) => {
   try {
     const User = require('./models/User');
-    
-    // Check if admin exists
     const adminExists = await User.findOne({ email: 'admin@ags.com' });
     if (!adminExists) {
       const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -60,18 +61,14 @@ app.get('/api/seed', async (req, res) => {
         role: 'admin',
         isActive: true
       });
-      res.json({ message: '✅ Admin created: admin@ags.com / admin123' });
+      res.json({ message: '✅ Admin created' });
     } else {
-      res.json({ message: 'Admin already exists. Login with admin@ags.com / admin123' });
+      res.json({ message: 'Admin already exists' });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-// Chat routes
-const chatRoutes = require("./routes/chatRoutes");
-app.use("/api/chat", chatRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -81,12 +78,19 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
+
+// SOCKET CONFIG
 const io = new Server(server, {
-  cors: { origin: ["http://localhost:3000", "https://ags-tms-frontend.onrender.com"] }
+  cors: { 
+    origin: ["http://localhost:3000", "https://ags-tms-frontend.onrender.com"],
+    credentials: true
+  }
 });
 
+// CASE-SENSITIVITY FIX for chatSocket
 require("./socket/chatSocket")(io);
 
+// DATABASE & START
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {

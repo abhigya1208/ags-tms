@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ChatList from "../components/chat/ChatList";
 import ChatWindow from "../components/chat/ChatWindow";
+import api from "../services/api";
 import { getSocket } from "../socket/socket";
 import "../components/chat/Chat.css";
-
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const ChatPage = () => {
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [notifications, setNotifications] = useState([]); // { chatId, senderName, text }
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
+  const currentUser = JSON.parse(localStorage.getItem("ags_user") || "{}");
+  const token = localStorage.getItem("ags_token");
 
   const authHeaders = {
     "Content-Type": "application/json",
@@ -24,9 +23,8 @@ const ChatPage = () => {
   // ─── Fetch all chats ───────────────────────────────────────────────────────
   const fetchChats = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/chat`, { headers: authHeaders });
-      const data = await res.json();
-      setChats(data);
+      const res = await api.get('/chat');
+      setChats(res.data);
     } catch (err) {
       console.error("fetchChats error:", err);
     } finally {
@@ -42,7 +40,6 @@ const ChatPage = () => {
     socket.on("online_users", (users) => setOnlineUsers(users));
 
     socket.on("receive_message", (message) => {
-      // Update lastMessage in chat list
       setChats((prev) =>
         prev.map((c) =>
           c._id === message.chatId
@@ -53,14 +50,12 @@ const ChatPage = () => {
     });
 
     socket.on("new_notification", (notif) => {
-      // Only show notification if this chat is not currently selected
       setSelectedChat((sel) => {
         if (!sel || sel._id !== notif.chatId) {
           setNotifications((prev) => [
             { ...notif, id: Date.now() },
             ...prev.slice(0, 4),
           ]);
-          // Auto-dismiss after 4 seconds
           setTimeout(() => {
             setNotifications((prev) => prev.filter((n) => n.chatId !== notif.chatId));
           }, 4000);
@@ -78,7 +73,6 @@ const ChatPage = () => {
 
   const handleSelectChat = (chat) => {
     setSelectedChat(chat);
-    // Remove notification for this chat
     setNotifications((prev) => prev.filter((n) => n.chatId !== chat._id));
   };
 
@@ -93,7 +87,6 @@ const ChatPage = () => {
 
   return (
     <div className="chat-page">
-      {/* ── Popup Notifications ── */}
       <div className="notification-stack">
         {notifications.map((n) => (
           <div
@@ -120,7 +113,6 @@ const ChatPage = () => {
         ))}
       </div>
 
-      {/* ── Main Layout ── */}
       <div className="chat-layout">
         <ChatList
           chats={chats}
