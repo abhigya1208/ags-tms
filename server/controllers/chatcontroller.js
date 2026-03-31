@@ -26,7 +26,6 @@ const getMyChats = async (req, res) => {
 // ─── Get all users (to start a new chat) ────────────────────────────────────
 const getAllUsers = async (req, res) => {
   try {
-    // Use the existing User model from your project
     const User = mongoose.model("User");
     const users = await User.find(
       { _id: { $ne: req.user._id } },
@@ -49,7 +48,6 @@ const createOrGetChat = async (req, res) => {
       return res.status(400).json({ message: "targetUserId is required" });
     }
 
-    // Check if chat already exists between these two users
     let chat = await Chat.findOne({
       isGroup: false,
       members: { $all: [userId, targetUserId], $size: 2 },
@@ -59,7 +57,6 @@ const createOrGetChat = async (req, res) => {
 
     if (chat) return res.json(chat);
 
-    // Create new 1-to-1 chat
     const newChat = await Chat.create({
       isGroup: false,
       members: [userId, targetUserId],
@@ -90,14 +87,12 @@ const createGroupChat = async (req, res) => {
       });
     }
 
-    // Include creator in members
     const allMembers = [...new Set([...members, userId.toString()])];
 
     if (allMembers.length > 15) {
       return res.status(400).json({ message: "Group cannot exceed 15 members" });
     }
 
-    // If system admin is in the group, they become admin; else creator is admin
     const User = mongoose.model("User");
     const adminUser = await User.findOne({
       _id: { $in: allMembers },
@@ -125,7 +120,7 @@ const createGroupChat = async (req, res) => {
   }
 };
 
-// ─── Add member to group (anyone can add) ───────────────────────────────────
+// ─── Add member to group ───────────────────────────────────────────────────
 const addMember = async (req, res) => {
   try {
     const { chatId } = req.params;
@@ -220,7 +215,6 @@ const getMessages = async (req, res) => {
     const limit = 40;
     const skip = (page - 1) * limit;
 
-    // Make sure user is a member
     const chat = await Chat.findOne({
       _id: chatId,
       members: req.user._id,
@@ -235,10 +229,54 @@ const getMessages = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Return in ascending order for display
     res.json(messages.reverse());
   } catch (err) {
     console.error("getMessages error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ─── Send message (create new message) ───────────────────────────────────────
+const sendMessage = async (req, res) => {
+  try {
+    const { chatId, content } = req.body;
+    const senderId = req.user._id;
+
+    if (!chatId || !content) {
+      return res.status(400).json({ message: "Chat ID and content are required" });
+    }
+
+    const chat = await Chat.findOne({
+      _id: chatId,
+      members: senderId,
+    });
+
+    if (!chat) {
+      return res.status(403).json({ message: "You are not a member of this chat" });
+    }
+
+    const message = await Message.create({
+      chatId,
+      senderId,
+      content: content.trim(),
+    });
+
+    const populatedMessage = await Message.findById(message._id)
+      .populate("senderId", "name role");
+
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message._id,
+      updatedAt: new Date(),
+    });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(chatId).emit("newMessage", populatedMessage);
+    }
+
+    res.status(201).json(populatedMessage);
+  } catch (err) {
+    console.error("sendMessage error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -252,4 +290,5 @@ module.exports = {
   removeMember,
   deleteGroup,
   getMessages,
+  sendMessage,
 };

@@ -1,9 +1,6 @@
 const express = require("express");
 const router = express.Router();
-
-// FIX: 'protect' ki jagah 'authenticate' use kiya jo aapki auth.js mein defined hai
-const { authenticate } = require("../middleware/auth"); 
-
+const { authenticate } = require("../middleware/auth");
 const {
   getMyChats,
   getAllUsers,
@@ -16,7 +13,7 @@ const {
   sendMessage
 } = require("../controllers/chatcontroller");
 
-// Sabhi routes ko protect karne ke liye middleware use karein
+// Sabhi routes ko protect karne ke liye
 router.use(authenticate);
 
 // Chat Routes
