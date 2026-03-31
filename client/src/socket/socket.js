@@ -1,27 +1,24 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// URL logic to prevent /api/socket issues
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SOCKET_URL = BASE_URL.endsWith('/api') ? BASE_URL.replace('/api', '') : BASE_URL;
 
 let socket = null;
 
-/**
- * Returns a connected socket instance.
- * Reads token from localStorage (reusing your existing auth).
- * Call this once when user enters the chat page.
- */
 export const getSocket = () => {
   if (!socket) {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("ags_token"); // Updated to your ags_token key
 
     socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
       reconnectionAttempts: 5,
+      withCredentials: true
     });
 
     socket.on("connect", () => {
       console.log("[Socket] Connected:", socket.id);
-      socket.emit("join_my_rooms");
     });
 
     socket.on("connect_error", (err) => {
@@ -32,10 +29,6 @@ export const getSocket = () => {
   return socket;
 };
 
-/**
- * Disconnect and destroy socket instance.
- * Call when user logs out.
- */
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
