@@ -1,9 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { authenticate } = require("../middleware/auth");
-const chatController = require("../controllers/chatcontroller");
 
-// Destructure with safety check
+// Render/Linux fix: Check if your file is 'chatController' or 'chatcontroller'
+let chatController;
+try {
+  chatController = require("../controllers/chatcontroller");
+} catch (err) {
+  chatController = require("../controllers/chatcontroller");
+}
+
 const {
   getMyChats,
   getAllUsers,
@@ -16,8 +22,11 @@ const {
   sendMessage
 } = chatController;
 
-// Debug log
-console.log("✅ Chat routes loaded, sendMessage exists:", typeof sendMessage === "function");
+// Debug log to confirm everything is loaded in Render logs
+console.log("✅ Chat functions check:", {
+  getMyChats: typeof getMyChats,
+  sendMessage: typeof sendMessage
+});
 
 router.use(authenticate);
 
