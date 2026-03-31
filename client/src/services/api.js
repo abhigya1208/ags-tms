@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://ags-tms-backend.onrender.com/api'
+  ? 'https://ags-tms-backend.onrender.com'
   : 'http://localhost:5000/api';
 
 const api = axios.create({
