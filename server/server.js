@@ -13,9 +13,22 @@ const teacherRoutes = require('./routes/teachers');
 const adminRoutes = require('./routes/admin');
 const exportRoutes = require('./routes/export');
 const logRoutes = require('./routes/logs');
-const chatRoutes = require("./routes/chatRoutes"); // Corrected path
+const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
+const server = http.createServer(app); // Server definition moved up
+
+// SOCKET CONFIG
+const io = new Server(server, {
+  cors: { 
+    origin: ["http://localhost:3000", "https://ags-tms-frontend.onrender.com"],
+    credentials: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+// 🔥 CRITICAL FIX: Set io instance to app so controllers can use it
+app.set("io", io);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -25,7 +38,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS FIX: Allow methods and headers for Render
+// CORS FIX
 app.use(cors({ 
   origin: ['http://localhost:3000', 'https://ags-tms-frontend.onrender.com'], 
   credentials: true,
@@ -42,7 +55,7 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/logs', logRoutes);
-app.use('/api/chat', chatRoutes); // Standard path: access via /api/chat
+app.use('/api/chat', chatRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
@@ -55,11 +68,7 @@ app.get('/api/seed', async (req, res) => {
     if (!adminExists) {
       const hashedPassword = await bcrypt.hash('admin123', 10);
       await User.create({
-        name: 'Admin User',
-        email: 'admin@ags.com',
-        password: hashedPassword,
-        role: 'admin',
-        isActive: true
+        name: 'Admin User', email: 'admin@ags.com', password: hashedPassword, role: 'admin', isActive: true
       });
       res.json({ message: '✅ Admin created' });
     } else {
@@ -76,19 +85,10 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 5000;
-const server = http.createServer(app);
-
-// SOCKET CONFIG
-const io = new Server(server, {
-  cors: { 
-    origin: ["http://localhost:3000", "https://ags-tms-frontend.onrender.com"],
-    credentials: true
-  }
-});
-
-// CASE-SENSITIVITY FIX for chatSocket
+// SOCKET HANDLER
 require("./socket/chatSocket")(io);
+
+const PORT = process.env.PORT || 5000;
 
 // DATABASE & START
 mongoose

@@ -7,7 +7,7 @@ let chatController;
 try {
   chatController = require("../controllers/chatcontroller");
 } catch (err) {
-  chatController = require("../controllers/chatController");
+  chatController = require("../controllers/chatcontroller");
 }
 
 const {
