@@ -107,15 +107,7 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
         // Replace temp message with real one
         setMessages((prev) => prev.map(m => m._id === tempId ? { ...res.data, text: res.data.text || res.data.content } : m));
         
-        // Emit via socket for real-time (broadcast only, not to self)
-        if (socket && socket.connected) {
-          socket.emit("sendMessage", {
-            chatId: chat._id,
-            content: trimmed,
-            senderId: currentUser._id,
-            senderName: currentUser.name
-          });
-        }
+        
       }
     } catch (err) {
       console.error("Send error:", err);
