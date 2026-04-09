@@ -36,7 +36,19 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
     
     const onReceiveMessage = (msg) => {
       if (msg.chatId === chatIdRef.current) {
-        setMessages((prev) => [...prev, msg]);
+        // ✅ FIX: Check if message already exists before adding
+        setMessages((prev) => {
+          // Don't add if message already exists (by _id)
+          const exists = prev.some(m => m._id === msg._id);
+          if (exists) return prev;
+          
+          // Don't add if it's our own temp message that's waiting for replacement
+          const isOwnTemp = prev.some(m => m.isTemp && m.content === msg.text && m.senderId?._id === currentUser._id);
+          if (isOwnTemp) return prev;
+          
+          return [...prev, msg];
+        });
+        
         // Update last message in chat list
         if (onChatUpdate) {
           onChatUpdate({
@@ -61,7 +73,7 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
       socket.off("newMessage", onReceiveMessage);
       socket.off("messagesRead", onMessagesRead);
     };
-  }, [socket, chat, onChatUpdate]);
+  }, [socket, chat, onChatUpdate, currentUser._id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -76,7 +88,7 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
     const tempMessage = {
       _id: tempId,
       chatId: chat._id,
-      content: trimmed,
+      text: trimmed,
       senderId: currentUser,
       createdAt: new Date().toISOString(),
       isTemp: true
@@ -93,9 +105,9 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
       
       if (res.data) {
         // Replace temp message with real one
-        setMessages((prev) => prev.map(m => m._id === tempId ? res.data : m));
+        setMessages((prev) => prev.map(m => m._id === tempId ? { ...res.data, text: res.data.text || res.data.content } : m));
         
-        // Emit via socket for real-time
+        // Emit via socket for real-time (broadcast only, not to self)
         if (socket && socket.connected) {
           socket.emit("sendMessage", {
             chatId: chat._id,
@@ -160,7 +172,7 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
             <MessageBubble 
               key={msg._id || idx} 
               message={msg} 
-              isOwn={msg.senderId?._id === currentUser._id || msg.senderId === currentUser._id || msg.senderId?._id === currentUser._id}
+              isOwn={msg.senderId?._id === currentUser._id || msg.senderId === currentUser._id}
               isTemp={msg.isTemp}
             />
           ))
