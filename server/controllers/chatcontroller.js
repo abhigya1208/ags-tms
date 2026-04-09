@@ -181,7 +181,8 @@ const sendMessage = async (req, res) => {
     if (!chat) {
       return res.status(403).json({ message: "You are not a member of this chat" });
     }
-    const message = await Message.create({ chatId, senderId, content: content.trim() });
+    // FIX: Use 'text' instead of 'content' to match schema
+    const message = await Message.create({ chatId, senderId, text: content.trim() });
     const populatedMessage = await Message.findById(message._id).populate("senderId", "name role");
     await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id, updatedAt: new Date() });
     const io = req.app.get("io");
