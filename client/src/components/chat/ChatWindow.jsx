@@ -189,4 +189,4 @@ const ChatWindow = ({ chat, currentUser, authHeaders, onChatUpdate, onGroupDelet
   );
 };
 
-export default ChatWindow;
+export default ChatWindow;  
