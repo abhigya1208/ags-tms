@@ -25,7 +25,12 @@ api.interceptors.response.use(
       localStorage.removeItem('ags_token');
       localStorage.removeItem('ags_user');
       localStorage.removeItem('ags_session');
-      window.dispatchEvent(new Event('auth:logout'));
+      
+      // Prevent infinite loop if the 401 occurred on the logout request itself
+      const isLogoutRequest = err.config?.url?.includes('/auth/logout');
+      if (!isLogoutRequest) {
+        window.dispatchEvent(new Event('auth:logout'));
+      }
     }
     return Promise.reject(err);
   }

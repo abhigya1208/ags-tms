@@ -18,10 +18,18 @@ const chatRoutes = require("./routes/chatRoutes");
 const app = express();
 const server = http.createServer(app); // Server definition moved up
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://ags-tms-frontend.onrender.com'
+];
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, ''));
+}
+
 // SOCKET CONFIG
 const io = new Server(server, {
   cors: { 
-    origin: ["http://localhost:3000", "https://ags-tms-frontend.onrender.com"],
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST"]
   }
@@ -30,6 +38,14 @@ const io = new Server(server, {
 // 🔥 CRITICAL FIX: Set io instance to app so controllers can use it
 app.set("io", io);
 
+// CORS MUST be registered before rate limiting or body parsers
+app.use(cors({ 
+  origin: allowedOrigins, 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -37,14 +53,6 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' }
 });
 app.use(limiter);
-
-// CORS FIX
-app.use(cors({ 
-  origin: ['http://localhost:3000', 'https://ags-tms-frontend.onrender.com'], 
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
 app.use(express.json({ limit: '10mb' }));
 
